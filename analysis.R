@@ -3,7 +3,8 @@
 #          Alfredo Hernández <aldomann.designs@gmail.com>
 #          Alejandro Jiménez <aljrico@gmail.com>
 
-library(tidytext)
+library(tidyverse)
+library(tidytext) # Loads tidytetx
 
 # Sentiment analysis test ----------------------------------
 
