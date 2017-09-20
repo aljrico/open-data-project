@@ -11,4 +11,4 @@ library(tidytext) # Loads tidytetx
 # The AFINN lexicon assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment
 get_sentiments("afinn")
 
-# test Crs
+# second test Crs
