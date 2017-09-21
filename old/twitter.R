@@ -2,9 +2,9 @@
 # Authors: Cristian Estany <cresbabellpuig@gmail.com>
 #          Alfredo Hernández <aldomann.designs@gmail.com>
 #          Alejandro Jiménez <aljrico@gmail.com>
-#------------------------------------------------------------------
 
-# Activate Packages
+
+# Load libraries -------------------------------------------
 library(twitteR)
 library(RCurl)
 library(RJSONIO)
@@ -12,7 +12,10 @@ library(stringr)
 library(tidyverse)
 library(tidytext)
 library(stringi)
-	
+
+
+# Twitter credentials --------------------------------------
+
 # Declare Twitter API Credentials
 api_key <- "PWjDRNdHLndOJewEKjNDDSBBI" # From dev.twitter.com
 api_secret <- "vxfnBjGre7hKmexEvxnM6B3I9TX9dSFhWbvvCEXqb2QYfV03jI" # From dev.twitter.com
@@ -22,10 +25,11 @@ token_secret <- "sWzarXl0W8FewiSC51OMCwqnGZ6L2EQivKfUv4uy7Cpil" # From dev.twitt
 # Create Twitter Connection
 setup_twitter_oauth(api_key, api_secret, token, token_secret)
 
+# Twitter API ----------------------------------------------
+
 # Query for tweets
 tweets <- searchTwitter("#Interstellar", n=10000, lang="en", since="2014-08-20")
 tweets.df <- twListToDF(tweets)
-
 
 # Sentiment analysis
 for(i in 1:length(tweets.df$text)){
