@@ -7,6 +7,7 @@
 
 library(tidyverse)
 library(data.table)
+library(lubridate)
 
 # Read and clean raw data ----------------------------------
 
@@ -18,10 +19,17 @@ library(data.table)
 # write_csv(chicago.df.clean, "data/Crimes_-_2001_to_present_clean.csv")
 
 # Read cleaned data
-chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", header = TRUE) %>%
-	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`)
+chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", header = TRUE)
+
+# Clean formats and column names
+chicago.df <- chicago.df %>%
+	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`) %>%
+	mutate(Date = mdy_hms(Date))
+
+# Smaller data frame for testing purposes
+chicago.df.small <- chicago.df[1:200,]
 
 # Working example ------------------------------------------
 
-ggplot(chicago.df, aes(x = Longitude, y = Latitude)) +
+ggplot(chicago.df.small, aes(x = Longitude, y = Latitude)) +
 	geom_point(aes(colour = Primary.Type))
