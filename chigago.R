@@ -8,6 +8,7 @@
 library(tidyverse)
 library(data.table)
 library(lubridate)
+library(ggmap)
 
 # Read and clean raw data ----------------------------------
 
@@ -24,12 +25,24 @@ chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", h
 # Clean formats and column names
 chicago.df <- chicago.df %>%
 	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`) %>%
-	mutate(Date = mdy_hms(Date))
+	mutate(Date = mdy_hms(Date)) %>%
+	filter(is.na(Longitude) != TRUE)
+
+# NA test (only 1.3% of the reports are not geolocated)
+# summary(chicago.df$Latitude)
+
+# Filter an arbitrary range of years
+chicago.df <- chicago.df %>%
+	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
 chicago.df.small <- chicago.df[1:200,]
 
-# Working example ------------------------------------------
+# Maps -----------------------------------------------------
 
-ggplot(chicago.df.small, aes(x = Longitude, y = Latitude)) +
-	geom_point(aes(colour = Primary.Type))
+# Simple map using a sample
+chicago <- get_map(location = 'chicago', zoom = 11)
+
+ggmap(chicago) +
+	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
+	labs(x = "Longitude", y = "Latitude")
