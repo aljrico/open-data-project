@@ -36,7 +36,7 @@ chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
-chicago.df.small <- chicago.df[1:200,]
+chicago.df.small <- chicago.df[1:20,]
 
 # Maps -----------------------------------------------------
 
@@ -46,3 +46,13 @@ chicago <- get_map(location = 'chicago', zoom = 11)
 ggmap(chicago) +
 	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
 	labs(x = "Longitude", y = "Latitude")
+
+# Random plots ---------------------------------------------
+
+# Histogram
+ggplot(chicago.df) +
+	geom_histogram(aes(year(Date)))
+
+# Testing lubdridate
+ggplot(chicago.df.small, aes(Date, Longitude)) +
+	geom_point()
