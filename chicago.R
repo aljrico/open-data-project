@@ -36,7 +36,7 @@ chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
-chicago.df.small <- chicago.df[1:20,]
+chicago.df.small <- chicago.df[1:2000,]
 
 # Maps -----------------------------------------------------
 
@@ -50,9 +50,25 @@ ggmap(chicago) +
 # Random plots ---------------------------------------------
 
 # Histogram
-ggplot(chicago.df) +
-	geom_histogram(aes(year(Date)))
+ggplot(chicago.df %>% filter(Primary.Type == "THEFT" | Primary.Type == "BURGLARY")) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
 # Testing lubdridate
 ggplot(chicago.df.small, aes(Date, Longitude)) +
 	geom_point()
+
+
+
+chicago.df$Primary.Type[chicago.df$Primary.Type == "NON-CRIMINAL (SUBJECT SPECIFIED)"] <- "NON - CRIMINAL"
+
+
+ggmap(chicago) +
+	geom_point(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
+	labs(x = "Longitude", y = "Latitude")
+
+
+ggmap(chicago, extent = "device") +
+	geom_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
+	stat_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
+	#scale_fill_gradient(low = "dark blue" ,high = "white") +
+	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
