@@ -26,7 +26,10 @@ chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", h
 chicago.df <- chicago.df %>%
 	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`) %>%
 	mutate(Date = mdy_hms(Date)) %>%
-	filter(is.na(Longitude) != TRUE)
+	filter(is.na(Longitude) != TRUE) %>%
+	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
+
+unique(chicago.df$Primary.Type)
 
 # NA test (only 1.3% of the reports are not geolocated)
 # summary(chicago.df$Latitude)
@@ -38,10 +41,15 @@ chicago.df <- chicago.df %>%
 # Smaller data frame for testing purposes
 chicago.df.small <- chicago.df[1:2000,]
 
-# Maps -----------------------------------------------------
+# Load map data --------------------------------------------
 
-# Simple map using a sample
-chicago <- get_map(location = 'chicago', zoom = 11)
+chicago <- get_map(location = "Chicago, Illinois", zoom = 11, source = "google")
+
+chicago.map <- ggmap(chicago, base_layer = ggplot(
+	aes(x = Longitude, y = Latitude),
+	data = chicago.df.small))
+
+# Maps -----------------------------------------------------
 
 ggmap(chicago) +
 	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
@@ -49,26 +57,24 @@ ggmap(chicago) +
 
 # Random plots ---------------------------------------------
 
-# Histogram
+# Histograms
 ggplot(chicago.df %>% filter(Primary.Type == "THEFT" | Primary.Type == "BURGLARY")) +
-	geom_histogram(aes(year(Date)), binwidth = 0.5)
+	geom_bar(aes(wday(Date, label = T))) +
+	facet_wrap(~ year(Date))
+
+ggplot(chicago.df %>% filter(Primary.Type == "THEFT" | Primary.Type == "BURGLARY")) +
+	geom_bar(aes(wday(Date, label = T)))
 
 # Testing lubdridate
 ggplot(chicago.df.small, aes(Date, Longitude)) +
 	geom_point()
 
+# Heatmaps -------------------------------------------------
 
-
-chicago.df$Primary.Type[chicago.df$Primary.Type == "NON-CRIMINAL (SUBJECT SPECIFIED)"] <- "NON - CRIMINAL"
-
-
-ggmap(chicago) +
-	geom_point(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
-	labs(x = "Longitude", y = "Latitude")
-
-# Heatmap test from origin/al
-ggmap(chicago, extent = "device") +
-	geom_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
-	stat_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") +
-	#scale_fill_gradient(low = "dark blue" ,high = "white") +
-	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
+chicago.map +
+	geom_density2d(size = 0.3) +
+	stat_density2d(aes(fill = ..level.., alpha = ..level..), size = 0.01,
+								 bins = 16, geom = "polygon") +
+	scale_fill_gradient(low = "green", high = "red") +
+	scale_alpha(range = c(0, 0.3), guide = FALSE)
+	# facet_wrap(~ day(chicago.df.small$Date))
