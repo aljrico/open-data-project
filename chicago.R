@@ -66,9 +66,9 @@ ggmap(chicago) +
 	geom_point(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
 	labs(x = "Longitude", y = "Latitude")
 
-
+# Heatmap test from origin/al
 ggmap(chicago, extent = "device") +
 	geom_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
-	stat_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
+	stat_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") +
 	#scale_fill_gradient(low = "dark blue" ,high = "white") +
 	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
