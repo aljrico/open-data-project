@@ -36,7 +36,7 @@ chicago.df <- chicago.df %>%
 
 # Filter an arbitrary range of years
 chicago.df <- chicago.df %>%
-	filter(year(Date) %in% 2012:2012)
+	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
 
@@ -58,8 +58,22 @@ ggmap(chicago) +
 ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
-ggplot(chicago.df %>% filter(Primary.Type == "DOMESTIC VIOLENCE")) +
+ggplot(chicago.df %>% filter(Primary.Type == "NARCOTICS")) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
+
+# Histogram per type
+ggplot(chicago.df) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5) +
+	facet_wrap(~ Primary.Type)
+
+# Histotgram per type (loop)
+for(var in unique(chicago.df$Primary.Type)){
+	dev.new()
+	print(ggplot(chicago.df[chicago.df$Primary.Type==var,]) +	geom_histogram(aes(year(Date)), binwidth = 0.5) + ggtitle(var))
+}
+
+
+
 
 # Testing lubdridate
 ggplot(chicago.df.small, aes(Date, Longitude)) +
