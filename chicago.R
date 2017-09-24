@@ -9,6 +9,7 @@ library(tidyverse)
 library(data.table)
 library(lubridate)
 library(ggmap)
+library(data.table)
 
 # Read and clean raw data ----------------------------------
 
@@ -31,12 +32,16 @@ chicago.df <- chicago.df %>%
 # NA test (only 1.3% of the reports are not geolocated)
 # summary(chicago.df$Latitude)
 
+# table(chicago.df$Primary.Type) # A lot of categores with low incidence.
+
 # Filter an arbitrary range of years
 chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
-chicago.df.small <- chicago.df[1:2000,]
+
+chicago.df.small <- data.table(chicago.df)
+chicago.df.small <- chicago.df.small[sample(.N, 2000)]
 
 # Maps -----------------------------------------------------
 
@@ -50,7 +55,10 @@ ggmap(chicago) +
 # Random plots ---------------------------------------------
 
 # Histogram
-ggplot(chicago.df %>% filter(Primary.Type == "THEFT" | Primary.Type == "BURGLARY")) +
+ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5)
+
+ggplot(chicago.df %>% filter(Primary.Type == "DOMESTIC VIOLENCE")) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
 # Testing lubdridate
@@ -77,5 +85,23 @@ ggmap(chicago, extent = "device") +
 ggmap(chicago, extent = "device") +
 	geom_density2d(data = chicago.df %>% filter(Primary.Type == "BATTERY"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
 	stat_density2d(data = chicago.df %>% filter(Primary.Type == "BATTERY"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
+	#scale_fill_gradient(low = "dark blue" ,high = "white") +
+	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
+
+chicago.df$Primary.Type[chicago.df$Primary.Type == "THEFT"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "BURGLARY"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "GAMBLING"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "LIQUOR LAW VIOLATION"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "PROSITUTION"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "NON-CRIMINAL"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "RITUALISM"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "MOTOR VEHICLE THEFT"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "CONCEALED CARRY LICENSE VIOLATION"] <- "NON - VIOLENT"
+chicago.df$Primary.Type[chicago.df$Primary.Type == "PUBLIC INDECENCY"] <- "NON - VIOLENT"
+
+
+ggmap(chicago, extent = "device") +
+	geom_density2d(data = chicago.df.small, aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
+	stat_density2d(data = chicago.df.small, aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
 	#scale_fill_gradient(low = "dark blue" ,high = "white") +
 	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
