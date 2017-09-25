@@ -10,6 +10,7 @@ library(data.table)
 library(lubridate)
 library(ggmap)
 library(data.table)
+library(dplyr)
 
 # Read and clean raw data ----------------------------------
 
@@ -90,7 +91,7 @@ ggmap(chicago) +
 
 
 ggmap(chicago, extent = "device") +
-	geom_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
-	stat_density2d(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
+	geom_density2d(data = chicago.df %>% filter(Primary.Type == "BURGLARY"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
+	stat_density2d(data = chicago.df %>% filter(Primary.Type == "BURGLARY"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
 	#scale_fill_gradient(low = "dark blue" ,high = "white") +
 	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
