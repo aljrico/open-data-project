@@ -11,29 +11,38 @@ library(lubridate)
 library(ggmap)
 library(data.table)
 library(dplyr)
+library(forcats)
 
-# Read and clean raw data ----------------------------------
-
-# All data (a few rows, for testing purposes)
-# chicago.df <- read.csv(file="data/Crimes_-_2001_to_present_clean.csv", nrows = 200)
+# Download raw data
+crimes.file = "data/Crimes_-_2001_to_present.csv"
+if (!file.exists(crimes.file)) {
+	# SRC: https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2
+	download.file("https://data.cityofchicago.org/api/views/ydr8-5enu/rows.csv", destfile = crimes.file)
+}
 
 # Read interesting columns and save into a CSV
-# chicago.df.clean <- fread("data/Crimes_-_2001_to_present.csv", sep = ",", header= TRUE, select = c(3,6,8,9,10,20,21))
-# write_csv(chicago.df.clean, "data/Crimes_-_2001_to_present_clean.csv")
+crimes.file.clean = "data/Crimes_-_2001_to_present_clean.csv"
+if (file.exists(crimes.file) & !file.exists(crimes.file.clean)) {
+	chicago.df.clean <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21))
+	write_csv(chicago.df.clean, crimes.file.clean)
+}
 
 # Read cleaned data
 chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", header = TRUE)
 
 # Clean formats and column names
 chicago.df <- chicago.df %>%
-	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`) %>%
+	rename(Primary.Type = `Primary Type`) %>%
 	mutate(Date = mdy_hms(Date)) %>%
-	filter(is.na(Longitude) != TRUE)
+	filter(is.na(Longitude) != TRUE) %>%
+	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
 
-# NA test (only 1.3% of the reports are not geolocated)
-# summary(chicago.df$Latitude)
+# Merge crime categories
+sort(table(chicago.df$Primary.Type)) # A lot of categores with low incidence.
 
-# sort(table(chicago.df$Primary.Type)) # A lot of categores with low incidence.
+all.categories <- factor(unique(chicago.df$Primary.Type))
+chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | Primary.Type == "BURGLARY" | Primary.Type == "LIQUOR LAW VIOLATION" | Primary.Type == "MOTOR VEHICLE THEFT" | Primary.Type == "ARSON" | Primary.Type == "CRIMINAL DAMAGE", "PROPERTY CRIME", ifelse(Primary.Type == "BATTERY" | Primary.Type == "ROBBERY" | Primary.Type=="ASSAULT" | Primary.Type =="CRIM SEXUAL ASSAULT" | Primary.Type == "SEX OFFENSE" | Primary.Type == "STALKING" | Primary.Type == "KIDNAPPING" | Primary.Type == "HOMICIDE" | Primary.Type == "INTIMIDATION" | Primary.Type == "HUMAN TRAFFICKING", "VIOLENT CRIMES", "QUALITY OF LIFE CRIMES")))
+
 
 # Filter an arbitrary range of years
 chicago.df <- chicago.df %>%
