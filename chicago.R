@@ -22,7 +22,7 @@ if (!file.exists(crimes.file)) {
 # Read interesting columns and save into a CSV
 crimes.file.clean = "data/Crimes_-_2001_to_present_clean.csv"
 if (file.exists(crimes.file) & !file.exists(crimes.file.clean)) {
-	chicago.df.clean <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,8,9,10,20,21))
+	chicago.df.clean <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21))
 	write_csv(chicago.df.clean, crimes.file.clean)
 }
 
@@ -31,12 +31,13 @@ chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", h
 
 # Clean formats and column names
 chicago.df <- chicago.df %>%
-	rename(Primary.Type = `Primary Type` , Location.Description = `Location Description`) %>%
+	rename(Primary.Type = `Primary Type`) %>%
 	mutate(Date = mdy_hms(Date)) %>%
 	filter(is.na(Longitude) != TRUE) %>%
 	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
 
 unique(chicago.df$Primary.Type)
+sort(table(chicago.df$Primary.Type))
 
 # NA test (only 1.3% of the reports are not geolocated)
 # summary(chicago.df$Latitude)
