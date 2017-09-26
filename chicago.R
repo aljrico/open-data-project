@@ -67,16 +67,17 @@ chicago.df <- chicago.df %>%
 	mutate(Date = mdy_hms(Date))
 
 # Filter an arbitrary range of years
-chicago.df <- chicago.df %>%
-	filter(Year %in% 2010:2017)
+# chicago.df <- chicago.df %>%
+	# filter(Year %in% 2010:2017)
 
 # Smaller data frame for testing purposes
-chicago.df.small <- chicago.df[1:20,]
+chicago.df.small <- chicago.df %>%
+	sample_n(500000)
 
 # Summarised data frame
-chicago.by.cat <- chicago.df %>%
+chicago.by.cat <- chicago.df.small %>%
 	group_by(Category, Year, Month = month(Date)) %>%
-	summarise(N = n()) %>%
+	dplyr::summarise(N = n()) %>%
 	mutate(Date = ymd(paste(Year, Month, 1))) %>%
 	ungroup() %>%
 	select(-c(Year, Month))
