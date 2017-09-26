@@ -59,13 +59,16 @@ mcrimes <- chicago.df %>%
 mcrimes$date <- ymd(paste(mcrimes$year, mcrimes$month, 1))
 mcrimes <- mcrimes[c(1,4,5)]
 
+
 # Maps -----------------------------------------------------
+
 # Simple map using a sample
 chicago <- get_map(location = 'chicago', zoom = 11)
 
 ggmap(chicago) +
 	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
 	labs(x = "Longitude", y = "Latitude")
+
 
 # Random plots ---------------------------------------------
 
@@ -89,7 +92,11 @@ for(var in unique(chicago.df$Primary.Type)){
 
 # Historical plot
 ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
-	geom_smooth(method = 'gam')
+	theme_bw() +
+	geom_line(size=1, lineed="round") +
+	theme(axis.text.x = element_text(face = "bold")) +
+	theme(axis.text.y = element_text(face = "bold"))
+	
 
 # Testing lubdridate
 ggplot(chicago.df.small, aes(Date, Longitude)) +
