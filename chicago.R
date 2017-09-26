@@ -23,7 +23,7 @@ if (!file.exists(crimes.file)) {
 # Read interesting columns and save into a CSV
 crimes.file.clean = "data/Crimes_-_2001_to_present_clean.csv"
 if (file.exists(crimes.file) & !file.exists(crimes.file.clean)) {
-	chicago.df <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21))%>%
+	chicago.df <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21)) %>%
 		# Clean data names and
 		dplyr::rename(PrimaryType = `Primary Type`) %>%
 		filter(is.na(Longitude) != TRUE) %>%
@@ -72,7 +72,7 @@ chicago.df <- chicago.df %>%
 
 # Smaller data frame for testing purposes
 chicago.df.small <- chicago.df %>%
-	sample_n(500000)
+	sample_n(50000)
 
 # Summarised data frame
 chicago.by.cat <- chicago.df.small %>%
@@ -90,9 +90,9 @@ ggplot(chicago.by.cat) +
 
 chicago <- get_map(location = "Chicago, Illinois", zoom = 11, source = "google")
 
-chicago.map <- ggmap(chicago, base_layer = ggplot(
-	aes(x = Longitude, y = Latitude),
-	data = chicago.df))
+# chicago.map <- ggmap(chicago, base_layer = ggplot(
+# 	aes(x = Longitude, y = Latitude),
+# 	data = chicago.df))
 
 # Maps -----------------------------------------------------
 
@@ -116,12 +116,10 @@ ggplot(chicago.df.small, aes(Date, Longitude)) +
 
 # Heatmaps -------------------------------------------------
 
-ggmap(chicago, base_layer = ggplot(aes(x = Longitude, y = Latitude), data = chicago.df)) +
+ggmap(chicago, base_layer = ggplot(aes(x = Longitude, y = Latitude), data = chicago.df.small)) +
 	geom_density2d(size = 0.3) +
 	stat_density2d(aes(fill = ..level.., alpha = ..level..), size = 0.01,
 								 bins = 16, geom = "polygon") +
 	scale_fill_gradient(low = "green", high = "red") +
-	scale_alpha(range = c(0, 0.3), guide = FALSE)
-
-+
-	facet_wrap(~ Year)
+	scale_alpha(range = c(0, 0.3), guide = FALSE) +
+	facet_wrap(~ Category)
