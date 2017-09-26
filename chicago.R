@@ -26,6 +26,7 @@ if (file.exists(crimes.file) & !file.exists(crimes.file.clean)) {
 	chicago.df.clean <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21))
 	write_csv(chicago.df.clean, crimes.file.clean)
 }
+rm(crimes.file, crimes.file.clean)
 
 # Read cleaned data
 chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", header = TRUE)
@@ -41,7 +42,7 @@ chicago.df <- chicago.df %>%
 sort(table(chicago.df$Primary.Type)) 
 
 # Merge crime types in more general categories
-chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | Primary.Type == "BURGLARY" | Primary.Type == "LIQUOR LAW VIOLATION" | Primary.Type == "MOTOR VEHICLE THEFT" | Primary.Type == "ARSON" | Primary.Type == "CRIMINAL DAMAGE", "PROPERTY CRIME", ifelse(Primary.Type == "BATTERY" | Primary.Type == "ROBBERY" | Primary.Type=="ASSAULT" | Primary.Type =="CRIM SEXUAL ASSAULT" | Primary.Type == "SEX OFFENSE" | Primary.Type == "STALKING" | Primary.Type == "KIDNAPPING" | Primary.Type == "HOMICIDE" | Primary.Type == "INTIMIDATION" | Primary.Type == "HUMAN TRAFFICKING", "VIOLENT CRIMES", "QUALITY OF LIFE CRIMES")))
+chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | Primary.Type == "BURGLARY" | Primary.Type == "LIQUOR LAW VIOLATION" | Primary.Type == "MOTOR VEHICLE THEFT" | Primary.Type == "ARSON" | Primary.Type == "CRIMINAL DAMAGE", "PROPERTY CRIMES", ifelse(Primary.Type == "BATTERY" | Primary.Type == "ROBBERY" | Primary.Type=="ASSAULT" | Primary.Type =="CRIM SEXUAL ASSAULT" | Primary.Type == "SEX OFFENSE" | Primary.Type == "STALKING" | Primary.Type == "KIDNAPPING" | Primary.Type == "HOMICIDE" | Primary.Type == "INTIMIDATION" | Primary.Type == "HUMAN TRAFFICKING", "VIOLENT CRIMES", "QUALITY OF LIFE CRIMES")))
 
 
 # Filter an arbitrary range of years
@@ -50,7 +51,7 @@ chicago.df <- chicago.df %>%
 
 # Smaller data frame for testing purposes
 chicago.df.small <- data.table(chicago.df)
-chicago.df.small <- chicago.df.small[sample(.N, 20000)]
+chicago.df.small <- chicago.df.small[sample(.N, 200000)]
 
 # Sumarized data frame
 mcrimes <- chicago.df %>% 
@@ -102,18 +103,18 @@ ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
 ggplot(chicago.df.small, aes(Date, Longitude)) +
 	geom_point()
 
-
-
-chicago.df$Primary.Type[chicago.df$Primary.Type == "NON-CRIMINAL (SUBJECT SPECIFIED)"] <- "NON - CRIMINAL"
-
-
 ggmap(chicago) +
 	geom_point(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
 	labs(x = "Longitude", y = "Latitude")
 
-
+# Awesosme heatmap
 ggmap(chicago, extent = "device") +
-	geom_density2d(data = chicago.df %>% filter(Primary.Type == "BURGLARY"), aes(x = Longitude, y = Latitude), size = 0.1, color = "blue") +
-	stat_density2d(data = chicago.df %>% filter(Primary.Type == "BURGLARY"), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
+	geom_density2d(data = chicago.df.small, aes(x = Longitude, y = Latitude), size = 0.5, color = "grey") +
+	stat_density2d(data = chicago.df.small, aes(x = Longitude, y = Latitude, fill = Category, alpha = ..level..), size = 0.01,	 bins = 16, geom = "polygon") + 
 	#scale_fill_gradient(low = "dark blue" ,high = "white") +
-	scale_alpha(range = c(0.05, 0.5), guide = FALSE)
+	scale_alpha(range = c(0.05, 0.5), guide = FALSE) +
+	labs(x=NULL, y=NULL, title="Crime Distribution Heatmap\n") +
+	theme(panel.margin.y=unit(0.5, "cm")) +
+	theme(strip.background=element_rect(fill="white", color="white")) +
+	theme(strip.text=element_text(face="bold", hjust=0)) +
+	facet_wrap(~ Category)
