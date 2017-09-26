@@ -37,10 +37,10 @@ chicago.df <- chicago.df %>%
 	filter(is.na(Longitude) != TRUE) %>%
 	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
 
-# Merge crime categories
-sort(table(chicago.df$Primary.Type)) # A lot of categores with low incidence.
+# Exploratory Analysis: We can see the incidence of every crime type.
+sort(table(chicago.df$Primary.Type)) 
 
-all.categories <- factor(unique(chicago.df$Primary.Type))
+# Merge crime types in more general categories
 chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | Primary.Type == "BURGLARY" | Primary.Type == "LIQUOR LAW VIOLATION" | Primary.Type == "MOTOR VEHICLE THEFT" | Primary.Type == "ARSON" | Primary.Type == "CRIMINAL DAMAGE", "PROPERTY CRIME", ifelse(Primary.Type == "BATTERY" | Primary.Type == "ROBBERY" | Primary.Type=="ASSAULT" | Primary.Type =="CRIM SEXUAL ASSAULT" | Primary.Type == "SEX OFFENSE" | Primary.Type == "STALKING" | Primary.Type == "KIDNAPPING" | Primary.Type == "HOMICIDE" | Primary.Type == "INTIMIDATION" | Primary.Type == "HUMAN TRAFFICKING", "VIOLENT CRIMES", "QUALITY OF LIFE CRIMES")))
 
 
@@ -49,12 +49,17 @@ chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2017)
 
 # Smaller data frame for testing purposes
-
 chicago.df.small <- data.table(chicago.df)
 chicago.df.small <- chicago.df.small[sample(.N, 20000)]
 
-# Maps -----------------------------------------------------
+# Sumarized data frame
+mcrimes <- chicago.df %>% 
+	group_by(Category, year = year(Date), month = month(Date)) %>% 
+	summarise(N=n())
+mcrimes$date <- ymd(paste(mcrimes$year, mcrimes$month, 1))
+mcrimes <- mcrimes[c(1,4,5)]
 
+# Maps -----------------------------------------------------
 # Simple map using a sample
 chicago <- get_map(location = 'chicago', zoom = 11)
 
@@ -68,13 +73,13 @@ ggmap(chicago) +
 ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
-ggplot(chicago.df %>% filter(Primary.Type == "NARCOTICS")) +
+ggplot(chicago.df) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
-# Histogram per type
+# Histogram per category
 ggplot(chicago.df) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5) +
-	facet_wrap(~ Primary.Type)
+	facet_wrap(~ Category)
 
 # Histotgram per type (loop)
 for(var in unique(chicago.df$Primary.Type)){
@@ -82,8 +87,9 @@ for(var in unique(chicago.df$Primary.Type)){
 	print(ggplot(chicago.df[chicago.df$Primary.Type==var,]) +	geom_histogram(aes(year(Date)), binwidth = 0.5) + ggtitle(var))
 }
 
-
-
+# Historical plot
+ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
+	geom_smooth(method = 'gam')
 
 # Testing lubdridate
 ggplot(chicago.df.small, aes(Date, Longitude)) +
