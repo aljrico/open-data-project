@@ -70,43 +70,6 @@ ggmap(chicago) +
 	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
 	labs(x = "Longitude", y = "Latitude")
 
-
-# Random plots ---------------------------------------------
-
-# Histogram
-ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
-	geom_histogram(aes(year(Date)), binwidth = 0.5)
-
-ggplot(chicago.df) +
-	geom_histogram(aes(year(Date)), binwidth = 0.5)
-
-# Histogram per category
-ggplot(chicago.df) +
-	geom_histogram(aes(year(Date)), binwidth = 0.5) +
-	facet_wrap(~ Category)
-
-# Histotgram per type (loop)
-for(var in unique(chicago.df$Primary.Type)){
-	dev.new()
-	print(ggplot(chicago.df[chicago.df$Primary.Type==var,]) +	geom_histogram(aes(year(Date)), binwidth = 0.5) + ggtitle(var))
-}
-
-# Historical plot
-ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
-	theme_bw() +
-	geom_line(size=1, lineed="round") +
-	theme(axis.text.x = element_text(face = "bold")) +
-	theme(axis.text.y = element_text(face = "bold"))
-	
-
-# Testing lubdridate
-ggplot(chicago.df.small, aes(Date, Longitude)) +
-	geom_point()
-
-ggmap(chicago) +
-	geom_point(data = chicago.df %>% filter(Primary.Type == "HOMICIDE"), aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
-	labs(x = "Longitude", y = "Latitude")
-
 # Awesosme heatmap
 ggmap(chicago, extent = "device") +
 	geom_density2d(data = chicago.df.small, aes(x = Longitude, y = Latitude), size = 0.5, color = "grey") +
@@ -118,3 +81,87 @@ ggmap(chicago, extent = "device") +
 	theme(strip.background=element_rect(fill="white", color="white")) +
 	theme(strip.text=element_text(face="bold", hjust=0)) +
 	facet_wrap(~ Category)
+
+# Point map
+ggmap(chicago) +
+	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = as.factor(year(Date)))) +
+	labs(x = "Longitude", y = "Latitude")+
+	facet_wrap(~ Category)
+
+# Random plots ---------------------------------------------
+
+# Histogram
+ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5)
+
+ggplot(chicago.df) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5)
+
+# Historical histogram per category
+ggplot(chicago.df) +
+	geom_histogram(aes(year(Date)), binwidth = 0.5) +
+	facet_wrap(~ Category)
+
+# Historical plot
+ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
+	theme_bw() +
+	geom_line(size=1, lineed="round") +
+	theme(axis.text.x = element_text(face = "bold")) +
+	theme(axis.text.y = element_text(face = "bold"))
+
+# Monthly histogram per category
+ggplot(chicago.df) +
+	geom_histogram(aes(month(Date)), binwidth = 0.5) +
+	facet_wrap(~ Category)
+
+# Daily histogram per category
+ggplot(chicago.df) +
+	geom_histogram(aes(month(Date)), binwidth = 0.5) +
+	facet_wrap(~ Category)
+
+# Hourly histogram per category
+ggplot(chicago.df) +
+	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
+	facet_wrap(~ Category)
+
+# My old lady goes to church histogram per category
+ggplot(chicago.df %>%  filter(weekdays(Date) == "domingo")) +
+	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
+	facet_wrap(~ Category)
+
+# Hourly histogram per category and day
+ggplot(chicago.df) +
+	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
+	facet_grid(weekdays(Date) ~ Category)
+
+# Sunday Truce ---------------------------------------------
+
+# Setting weekdays in english
+Sys.setlocale("LC_TIME", "C")
+
+# Creating a new dataframe summarizing crimes by its weekday
+struce <- chicago.df %>% 
+	group_by(Category, wday = weekdays(Date)) %>% 
+	summarise(N=n())
+
+weekday <- data.frame()
+
+i=1
+for( day in unique(struce$wday)){
+weekday[i, 'mean'] <- mean(struce$N[struce$wday == day])
+weekday[i, 'dev'] <- sd(struce$N[struce$wday ==day])
+weekday[i, 'name'] <- day
+i = i+1
+}
+
+weekday$name <- factor(weekday$name, levels= c("Monday", 
+ "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+weekday[order(weekday$name), ]
+
+ggplot(struce, aes(x = wday, y = N)) +
+	geom_boxplot(outlier.shape=16)
+
+ggplot(weekday, aes(x = name, y = mean)) +
+	geom_point()
+
