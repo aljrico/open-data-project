@@ -13,6 +13,8 @@ library(data.table)
 library(dplyr)
 library(forcats)
 
+# Mining Data ------------------------------------------------
+
 # Download raw data
 crimes.file = "data/Crimes_-_2001_to_present.csv"
 if (!file.exists(crimes.file)) {
@@ -49,16 +51,25 @@ chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | 
 chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2017)
 
-# Smaller data frame for testing purposes
-chicago.df.small <- data.table(chicago.df)
-chicago.df.small <- chicago.df.small[sample(.N, 200000)]
-
 # Sumarized data frame
 mcrimes <- chicago.df %>% 
 	group_by(Category, year = year(Date), month = month(Date)) %>% 
 	summarise(N=n())
 mcrimes$date <- ymd(paste(mcrimes$year, mcrimes$month, 1))
 mcrimes <- mcrimes[c(1,4,5)]
+
+
+# Sampling ------------------------------------------------
+
+# Smaller data frame for testing purposes
+chicago.df.small <- data.table(chicago.df)
+chicago.df.small <- chicago.df.small[sample(.N, 200000)]
+
+ggplot(chicago.df) +
+	geom_histogram(aes(Primary.Type), binwidth = 0.5, stat='count')
+
+ggplot(chicago.df.small) +
+	geom_histogram(aes(Primary.Type), binwidth = 0.5, stat='count')
 
 
 # Maps -----------------------------------------------------
@@ -160,7 +171,7 @@ weekday$name <- factor(weekday$name, levels= c("Monday",
 weekday[order(weekday$name), ]
 
 ggplot(struce, aes(x = wday, y = N)) +
-	geom_boxplot(outlier.shape=16)
+	geom_boxplot()
 
 ggplot(weekday, aes(x = name, y = mean)) +
 	geom_point()
