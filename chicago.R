@@ -67,8 +67,8 @@ chicago.df <- chicago.df %>%
 	mutate(Date = mdy_hms(Date))
 
 # Filter an arbitrary range of years
-# chicago.df <- chicago.df %>%
-	# filter(Year %in% 2010:2017)
+chicago.df <- chicago.df %>%
+	filter(Year %in% 2001:2016)
 
 # Smaller data frame for testing purposes
 chicago.df.small <- chicago.df %>%
