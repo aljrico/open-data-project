@@ -123,3 +123,4 @@ ggmap(chicago, base_layer = ggplot(aes(x = Longitude, y = Latitude), data = chic
 	scale_fill_gradient(low = "green", high = "red") +
 	scale_alpha(range = c(0, 0.3), guide = FALSE) +
 	facet_wrap(~ Category)
+
