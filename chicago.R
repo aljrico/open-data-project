@@ -5,62 +5,63 @@
 
 # Libraries ------------------------------------------------
 
-library(tidyverse)
-library(data.table)
 library(lubridate)
 library(ggmap)
 
-# Read and clean raw data ----------------------------------
-
-# Download raw data
-crimes.file = "data/Crimes_-_2001_to_present.csv"
-if (!file.exists(crimes.file)) {
-	# SRC: https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2
-	download.file("https://data.cityofchicago.org/api/views/ydr8-5enu/rows.csv", destfile = crimes.file)
-}
-
-# Read interesting columns and save into a CSV
-crimes.file.clean = "data/Crimes_-_2001_to_present_clean.csv"
-if (file.exists(crimes.file) & !file.exists(crimes.file.clean)) {
-	chicago.df.clean <- fread(crimes.file, sep = ",", header= TRUE, select = c(3,6,9,18,20,21))
-	write_csv(chicago.df.clean, crimes.file.clean)
-}
+# Read and organise IUCR data ------------------------------
 
 # Read cleaned data
-chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", header = TRUE)
+source("read_iucr.R")
 
-# Clean formats and column names
+chicago.df <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv")
+
+# Use proper lubridate format
 chicago.df <- chicago.df %>%
-	rename(Primary.Type = `Primary Type`) %>%
-	mutate(Date = mdy_hms(Date)) %>%
-	filter(is.na(Longitude) != TRUE) %>%
-	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
-
-# NA test (only 1.3% of the reports are not geolocated)
-# summary(chicago.df$Latitude)
+	mutate(Date = mdy_hms(Date))
 
 # Filter an arbitrary range of years
 chicago.df <- chicago.df %>%
-	filter(year(Date) %in% 2001:2017)
+	filter(Year %in% 2001:2016)
 
 # Smaller data frame for testing purposes
-chicago.df.small <- chicago.df[1:20,]
+chicago.df.small <- chicago.df %>%
+	sample_n(50000)
+
+# Summarised data frame
+chicago.by.cat <- chicago.df.small %>%
+	group_by(Category, Year, Month = month(Date)) %>%
+	dplyr::summarise(N = n()) %>%
+	mutate(Date = ymd(paste(Year, Month, 1))) %>%
+	ungroup() %>%
+	select(-c(Year, Month))
+
+# Load map data --------------------------------------------
+
+chicago <- get_map(location = "Chicago, Illinois", zoom = 11, source = "google")
+
+# chicago.map <- ggmap(chicago, base_layer = ggplot(
+# 	aes(x = Longitude, y = Latitude),
+# 	data = chicago.df))
 
 # Maps -----------------------------------------------------
 
-# Simple map using a sample
-chicago <- get_map(location = 'chicago', zoom = 11)
-
 ggmap(chicago) +
-	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Primary.Type)) +
-	labs(x = "Longitude", y = "Latitude")
+	geom_point(data = chicago.df.small, aes(x = Longitude, y = Latitude, colour = Category)) +
+	labs(x = "Longitude", y = "Latitude") +
+	facet_wrap(~ Year)
 
-# Random plots ---------------------------------------------
+# Various plots --------------------------------------------
 
-# Histogram
-ggplot(chicago.df) +
-	geom_histogram(aes(year(Date)))
+# Chicago Tribune-like plot
+ggplot(chicago.by.cat) +
+	geom_line(aes(x = Date, y = N, colour = Category))
 
-# Testing lubdridate
-ggplot(chicago.df.small, aes(Date, Longitude)) +
-	geom_point()
+# Heatmaps
+ggmap(chicago, base_layer = ggplot(aes(x = Longitude, y = Latitude), data = chicago.df.small)) +
+	geom_density2d(size = 0.3) +
+	stat_density2d(aes(fill = ..level.., alpha = ..level..), size = 0.01,
+								 bins = 16, geom = "polygon") +
+	scale_fill_gradient(low = "green", high = "red") +
+	scale_alpha(range = c(0, 0.3), guide = FALSE) +
+	facet_wrap(~ Category)
+
