@@ -57,17 +57,17 @@ ct <- chicago.df %>%
 # Plots ----------------------------------------------------
 
 # Plot K functions
-plot_k_function <- function(df){
+plot_k_function <- function(df, my.title){
 	ggplot(df) +
 		geom_line(aes(x = r, y = theo), colour = "black", linetype = "solid") +
 		geom_line(aes(x = r, y = iso), colour = "red", linetype = "longdash") +
 		geom_line(aes(x = r, y = border), colour = "blue", linetype = "longdash") +
-		labs(title = "K function", x = "r", y = "K(r)")
+		labs(title = paste("K function for", my.title), x = "r", y = "K(r)")
 }
 
-plot_k_function(K.prop)
-plot_k_function(K.viol)
-plot_k_function(K.qual)
+plot_k_function(K.prop, "property crimes")
+plot_k_function(K.viol, "violent crimes")
+plot_k_function(K.qual, "quality of life crimes")
 
 # Histograms -----------------------------------------------
 
