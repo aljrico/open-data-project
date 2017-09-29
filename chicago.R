@@ -12,6 +12,7 @@ library(ggmap)
 library(data.table)
 library(dplyr)
 library(forcats)
+library(dgof)
 
 # Mining Data ------------------------------------------------
 
@@ -107,6 +108,9 @@ ggplot(test.sample, aes(x= Primary.Type, y = diff)) +
 	geom_bar(stat='identity', width=.5) +
 	coord_flip()
 
+# Are these two samples following theh same distribution? Kolmogorov-Smirnov test
+ks.test(test.sample$N.x, test.sample$N.y)
+
 # Maps -----------------------------------------------------
 
 # Simple map using a sample
@@ -162,7 +166,7 @@ ggplot(chicago.df) +
 
 # Daily histogram per category
 ggplot(chicago.df) +
-	geom_histogram(aes(month(Date)), binwidth = 0.5) +
+	geom_histogram(aes(day(Date)), binwidth = 0.5) +
 	facet_wrap(~ Category)
 
 # Hourly histogram per category
@@ -171,7 +175,7 @@ ggplot(chicago.df) +
 	facet_wrap(~ Category)
 
 # My old lady goes to church histogram per category
-ggplot(chicago.df %>%  filter(weekdays(Date) == "domingo")) +
+ggplot(chicago.df %>%  filter(weekdays(Date) == "Sunday")) +
 	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
 	facet_wrap(~ Category)
 
@@ -181,9 +185,6 @@ ggplot(chicago.df) +
 	facet_grid(weekdays(Date) ~ Category)
 
 # Sunday Truce ---------------------------------------------
-
-# Setting weekdays in english
-Sys.setlocale("LC_TIME", "C")
 
 # Creating a new dataframe summarizing crimes by its weekday
 struce <- chicago.df %>% 
@@ -195,7 +196,7 @@ weekday <- data.frame()
 i=1
 for( day in unique(struce$wday)){
 weekday[i, 'mean'] <- mean(struce$N[struce$wday == day])
-weekday[i, 'dev'] <- sd(struce$N[struce$wday ==day])
+weekday[i, 'dev'] <- sd(struce$N[struce$wday ==day])/sqrt(length(struce$N[struce$wday == day]))
 weekday[i, 'name'] <- day
 i = i+1
 }
@@ -208,6 +209,10 @@ weekday[order(weekday$name), ]
 ggplot(struce, aes(x = wday, y = N)) +
 	geom_boxplot()
 
-ggplot(weekday, aes(x = name, y = mean)) +
-	geom_point()
+ggplot(weekday, aes(x = name, y = mean, ymax = mean + dev, ymin = mean - dev)) +
+	geom_point() +
+	geom_errorbar()
 
+for (wday in unique(struce$wday)){
+t.test(struce$N[struce$wday == 'Sunday'], struce$N[struce$wday == wday])
+}
