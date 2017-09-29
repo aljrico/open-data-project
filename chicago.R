@@ -35,7 +35,7 @@ chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", h
 
 # Clean formats and column names
 chicago.df <- chicago.df %>%
-	rename(Primary.Type = `Primary Type`) %>%
+	dplyr::rename(Primary.Type = `Primary Type`) %>%
 	mutate(Date = mdy_hms(Date)) %>%
 	filter(is.na(Longitude) != TRUE) %>%
 	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
@@ -49,7 +49,7 @@ chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | 
 
 # Filter an arbitrary range of years
 chicago.df <- chicago.df %>%
-	filter(year(Date) %in% 2001:2017)
+	filter(year(Date) %in% 2001:2016)
 
 # Sumarized data frame
 mcrimes <- chicago.df %>% 
@@ -62,15 +62,50 @@ mcrimes <- mcrimes[c(1,4,5)]
 # Sampling ------------------------------------------------
 
 # Smaller data frame for testing purposes
+samp.size <- 200000
 chicago.df.small <- data.table(chicago.df)
-chicago.df.small <- chicago.df.small[sample(.N, 200000)]
+chicago.df.small <- as.data.frame(chicago.df.small[sample(.N, samp.size)])
 
-ggplot(chicago.df) +
-	geom_histogram(aes(Primary.Type), binwidth = 0.5, stat='count')
+#Prepare dummy dataframes to perform tests
+test1 <- chicago.df %>% 
+	group_by(Primary.Type) %>% 
+	summarise(N=n())
+test1 <- as.data.frame(test1)
 
-ggplot(chicago.df.small) +
-	geom_histogram(aes(Primary.Type), binwidth = 0.5, stat='count')
+#Normalizing the values of the dummy dataframes
+sum <- sum(test1$N)
+for(i in 1:length(test1$Primary.Type)){
+	test1[i,2] <- test1[i,2]/sum
+}
+test2 <- chicago.df.small %>% 
+	group_by(Primary.Type) %>% 
+	summarise(N=n())
+test2 <- as.data.frame(test2)
+sum <- sum(test2$N)
+for(i in 1:length(test2$Primary.Type)){
+	test2[i,2] <- test2[i,2]/sum
+}
 
+# Merge dummy dataframes into one test sample. 
+test.sample <- merge(test1, test2, by='Primary.Type', all.x = TRUE)
+test.sample[is.na(test.sample)] <- 0
+
+# Melt the test sample. This way is ready for a more straight-forward ggplot
+library(reshape)
+mdata <- melt(test.sample, id=c("Primary.Type"))
+colnames(mdata)[2] <-'samplenosample'
+
+# Barplot of the distribution of both original and sampled data
+ggplot(mdata, aes(x = Primary.Type, y = value, fill = samplenosample)) +
+	geom_bar( alpha = 1, position ='dodge', stat = 'identity', width=.5) +
+	coord_flip() +
+	labs(title = "Original Data vs Sampled Data")
+
+# Measure the difference of the distributions.
+test.sample$diff <- abs((test.sample$N.x - test.sample$N.y)*test.sample$N.x)
+ggplot(test.sample, aes(x= Primary.Type, y = diff)) + 
+	geom_bar(stat='identity', width=.5) +
+	coord_flip()
 
 # Maps -----------------------------------------------------
 
