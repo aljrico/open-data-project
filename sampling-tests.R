@@ -12,7 +12,7 @@ library(tidyverse)
 library(spatstat)
 
 # K tests functions ----------------------------------------
-ct.src <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv")
+ct.src <- read_ucr_db("data/Crimes_-_2001_to_present_clean.csv")
 
 get_k_function <- function(cat, sample = F, corr = "iso"){
 	ct <- ct.src %>%
@@ -81,4 +81,49 @@ b <- melt(a)
 
 ggplot(b) +
 	geom_bar(aes(x = label, y= value, fill = variable), stat="identity", width=.5, position = "dodge")
+
+#Prepare dummy dataframes to perform tests
+test1 <- chicago.df %>% 
+	group_by(Primary.Type) %>% 
+	summarise(N=n())
+test1 <- as.data.frame(test1)
+
+#Normalizing the values of the dummy dataframes
+sum <- sum(test1$N)
+for(i in 1:length(test1$Primary.Type)){
+	test1[i,2] <- test1[i,2]/sum
+}
+test2 <- chicago.df.small %>% 
+	group_by(Primary.Type) %>% 
+	summarise(N=n())
+test2 <- as.data.frame(test2)
+sum <- sum(test2$N)
+for(i in 1:length(test2$Primary.Type)){
+	test2[i,2] <- test2[i,2]/sum
+}
+
+# Merge dummy dataframes into one test sample. 
+test.sample <- merge(test1, test2, by='Primary.Type', all.x = TRUE)
+test.sample[is.na(test.sample)] <- 0
+
+# Melt the test sample. This way is ready for a more straight-forward ggplot
+library(reshape)
+mdata <- melt(test.sample, id=c("Primary.Type"))
+colnames(mdata)[2] <-'samplenosample'
+
+# Barplot of the distribution of both original and sampled data
+ggplot(mdata, aes(x = Primary.Type, y = value, fill = samplenosample)) +
+	geom_bar( alpha = 1, position ='dodge', stat = 'identity', width=.5) +
+	coord_flip() +
+	labs(title = "Original Data vs Sampled Data")
+
+# Measure the difference of the distributions.
+test.sample$diff <- abs((test.sample$N.x - test.sample$N.y)*test.sample$N.x)
+ggplot(test.sample, aes(x= Primary.Type, y = diff)) + 
+	geom_bar(stat='identity', width=.5) +
+	coord_flip()
+
+# Are these two samples following theh same distribution? Kolmogorov-Smirnov test
+ks.test(test.sample$N.x, test.sample$N.y)
+
 
