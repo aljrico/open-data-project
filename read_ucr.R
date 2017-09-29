@@ -57,8 +57,8 @@ rm(crimes.file, crimes.file.clean)
 
 # Read already cleaned data --------------------------------
 
-# Read cleaned data
-read_iucr_db <- function(file.name = "data/Crimes_-_2001_to_present_clean.csv"){
+# Read cleaned data function
+read_ucr_db <- function(file.name = "data/Crimes_-_2001_to_present_clean.csv"){
 	df <- fread(file = file.name, sep = ",", header = TRUE)
-	return(file)
+	return(df)
 }
