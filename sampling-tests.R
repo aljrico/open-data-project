@@ -11,53 +11,29 @@ source("read_ucr.R")
 library(tidyverse)
 library(spatstat)
 
-# Full data K tests ----------------------------------------
+# K tests functions ----------------------------------------
+ct.src <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv")
 
-ct <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv") %>%
-	filter(Category == "PROPERTY CRIME") %>%
-	# filter(Category == "VIOLENT CRIME") %>%
-	# filter(Category == "QUALITY OF LIFE CRIME") %>%
-	select(Longitude, Latitude)
+get_k_function <- function(cat, sample = F, corr = "iso"){
+	ct <- ct.src %>%
+		filter(Category == toupper(cat)) %>%
+		select(Longitude, Latitude)
 
-ct <- as.matrix(ct)
-ct <- as.ppp(ct, c(-87.8,-87.4,41.7,42))
+	if(sample != F){
+		ct <- ct %>%
+			sample_n(sample)
+	}
 
-# ct.K <- Kest(ct.pp, correction = "border")
-ct.K <- Kest(ct.pp, correction = "iso")
+	ct <- as.matrix(ct)
+	ct <- as.ppp(ct, c(-87.8,-87.4,41.7,42))
 
-# write.csv(ct.K, "k-tests/k-6m-qual-iso.csv")
+	ct.K <- Kest(ct, correction = corr)
 
-# Quickly plot K function
-# plot(ct.K)
+	return(ct.K)
+}
 
-# Read files -----------------------------------------------
-
-# Property of life crimes
-K.prop <- read.csv("k-tests/k-6m-prop-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-prop-iso.csv")$iso)
-
-# Violent of life crimes
-K.viol <- read.csv("k-tests/k-6m-viol-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-viol-iso.csv")$iso)
-
-# Quality of life crimes
-K.qual <- read.csv("k-tests/k-6m-qual-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-qual-iso.csv")$iso)
-
-# Sample K tests -------------------------------------------
-
-ct <- chicago.df %>%
-	sample_n(500000) %>%
-	filter(Category == "PROPERTY CRIME") %>%
-	# filter(Category == "VIOLENT CRIME") %>%
-	# filter(Category == "QUALITY OF LIFE CRIME") %>%
-	select(Longitude, Latitude)
-
-
-# Plots ----------------------------------------------------
+# Example of full K funct calculation
+# write.csv(get_k_function("quality of life crime"), "k-tests/k-6m-qual-iso.csv")
 
 # Plot K functions
 plot_k_function <- function(df, my.title){
@@ -67,6 +43,30 @@ plot_k_function <- function(df, my.title){
 		geom_line(aes(x = r, y = border), colour = "blue", linetype = "longdash") +
 		labs(title = paste("K function for", my.title), x = "r", y = "K(r)")
 }
+
+# Read files -----------------------------------------------
+
+# Property of life crimes (previously calculated)
+K.prop <- read.csv("k-tests/k-6m-prop-bord.csv") %>%
+	dplyr::select(r, theo, border) %>%
+	mutate(iso = read.csv("k-tests/k-6m-prop-iso.csv")$iso)
+
+# Violent of life crimes (previously calculated)
+K.viol <- read.csv("k-tests/k-6m-viol-bord.csv") %>%
+	dplyr::select(r, theo, border) %>%
+	mutate(iso = read.csv("k-tests/k-6m-viol-iso.csv")$iso)
+
+# Quality of life crimes (previously calculated)
+K.qual <- read.csv("k-tests/k-6m-qual-bord.csv") %>%
+	dplyr::select(r, theo, border) %>%
+	mutate(iso = read.csv("k-tests/k-6m-qual-iso.csv")$iso)
+
+# Sample K tests -------------------------------------------
+samp.size = 50000
+
+K.prop.samp <- get_k_function("property crime", samp.size)
+K.viol.samp <- get_k_function("violent crime", samp.size)
+K.qual.samp <- get_k_function("quality of life crime", samp.size)
 
 plot_k_function(K.prop, "property crimes")
 plot_k_function(K.viol, "violent crimes")
