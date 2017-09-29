@@ -3,15 +3,15 @@
 #          Alfredo Hernández <aldomann.designs@gmail.com>
 #          Alejandro Jiménez <aljrico@gmail.com>
 
+# Source base code -----------------------------------------
+source("read_ucr.R")
+
 # Libraries ------------------------------------------------
 
 library(tidyverse)
 library(spatstat)
 
 # Full data K tests ----------------------------------------
-
-# Read cleaned data
-source("read_iucr.R")
 
 ct <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv") %>%
 	filter(Category == "PROPERTY CRIME") %>%
