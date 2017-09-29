@@ -10,7 +10,10 @@ library(spatstat)
 
 # Full data K tests ----------------------------------------
 
-ct <- chicago.df %>%
+# Read cleaned data
+source("read_iucr.R")
+
+ct <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv") %>%
 	filter(Category == "PROPERTY CRIME") %>%
 	# filter(Category == "VIOLENT CRIME") %>%
 	# filter(Category == "QUALITY OF LIFE CRIME") %>%
@@ -22,7 +25,7 @@ ct <- as.ppp(ct, c(-87.8,-87.4,41.7,42))
 # ct.K <- Kest(ct.pp, correction = "border")
 ct.K <- Kest(ct.pp, correction = "iso")
 
-# write.csv(ct.K, "kest6mqual-rip.csv")
+# write.csv(ct.K, "k-tests/k-6m-qual-iso.csv")
 
 # Quickly plot K function
 # plot(ct.K)
@@ -71,4 +74,11 @@ plot_k_function(K.qual, "quality of life crimes")
 
 # Histograms -----------------------------------------------
 
+library(reshape2)
+
+a <- data.frame(label = c("a", "b", "c"), y1= c(1, 2, 3), y2 = c(4,5,6))
+b <- melt(a)
+
+ggplot(b) +
+	geom_bar(aes(x = label, y= value, fill = variable), stat="identity", width=.5, position = "dodge")
 
