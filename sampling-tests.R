@@ -18,17 +18,13 @@ get_k_function <- function(cat, sample = F, corr = "iso"){
 	ct <- ct.src %>%
 		filter(Category == toupper(cat)) %>%
 		select(Longitude, Latitude)
-
 	if(sample != F){
 		ct <- ct %>%
 			sample_n(sample)
 	}
-
 	ct <- as.matrix(ct)
 	ct <- as.ppp(ct, c(-87.8,-87.4,41.7,42))
-
 	ct.K <- Kest(ct, correction = corr)
-
 	return(ct.K)
 }
 
@@ -38,53 +34,66 @@ get_k_function <- function(cat, sample = F, corr = "iso"){
 # Plot K functions
 plot_k_function <- function(df, my.title){
 	ggplot(df) +
-		geom_line(aes(x = r, y = theo), colour = "black", linetype = "solid") +
-		geom_line(aes(x = r, y = iso), colour = "red", linetype = "longdash") +
-		geom_line(aes(x = r, y = border), colour = "blue", linetype = "longdash") +
+		geom_line(aes(x = r, y = theo), colour = "black", linetype = "longdash") +
+		geom_line(aes(x = r, y = iso), colour = "red", linetype = "solid") +
+		labs(title = paste("K function for", my.title), x = "r", y = "K(r)")
+}
+
+plot_k_function_comp <- function(df, df.samp, my.title){
+	ggplot() +
+		geom_line(data = df.samp,
+							aes(x = r, y = theo, linetype = "theo", colour = "sample")) +
+		geom_line(data = df.samp,
+							aes(x = r, y = iso, linetype = "iso", colour = "sample")) +
+		geom_line(data = df,
+							aes(x = r, y = theo.full, linetype = "theo", colour = "full")) +
+		geom_line(data = df,
+							aes(x = r, y = iso.full, linetype = "iso", colour = "full")) +
+		scale_linetype_manual(values = c("theo" = "longdash", "iso" = "solid")) +
 		labs(title = paste("K function for", my.title), x = "r", y = "K(r)")
 }
 
 # Read files -----------------------------------------------
 
 # Property of life crimes (previously calculated)
-K.prop <- read.csv("k-tests/k-6m-prop-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-prop-iso.csv")$iso)
+K.prop <- read.csv("k-tests/k-6m-prop-iso.csv") %>%
+	dplyr::select(r, theo.full = theo, iso.full = iso)
 
 # Violent of life crimes (previously calculated)
-K.viol <- read.csv("k-tests/k-6m-viol-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-viol-iso.csv")$iso)
+K.viol <- read.csv("k-tests/k-6m-viol-iso.csv") %>%
+	dplyr::select(r, theo.full = theo, iso.full = iso)
 
 # Quality of life crimes (previously calculated)
-K.qual <- read.csv("k-tests/k-6m-qual-bord.csv") %>%
-	dplyr::select(r, theo, border) %>%
-	mutate(iso = read.csv("k-tests/k-6m-qual-iso.csv")$iso)
+K.qual <- read.csv("k-tests/k-6m-qual-iso.csv") %>%
+	dplyr::select(r, theo.full = theo, iso.full = iso)
+
+# plot_k_function(K.prop.samp, "property crimes")
+# plot_k_function(K.viol, "violent crimes")
+# plot_k_function(K.qual, "quality of life crimes")
 
 # Sample K tests -------------------------------------------
-samp.size = 50000
+samp.size = 500000
 
 K.prop.samp <- get_k_function("property crime", samp.size)
 K.viol.samp <- get_k_function("violent crime", samp.size)
 K.qual.samp <- get_k_function("quality of life crime", samp.size)
 
-plot_k_function(K.prop, "property crimes")
-plot_k_function(K.viol, "violent crimes")
-plot_k_function(K.qual, "quality of life crimes")
+plot_k_function_comp(K.prop, K.prop.samp, "property crimes")
+plot_k_function_comp(K.viol, K.viol.samp, "violent crimes")
+plot_k_function_comp(K.qual, K.qual.samp, "quality of life crimes")
 
 # Histograms -----------------------------------------------
 
 library(reshape2)
 
-a <- data.frame(label = c("a", "b", "c"), y1= c(1, 2, 3), y2 = c(4,5,6))
 b <- melt(a)
 
 ggplot(b) +
 	geom_bar(aes(x = label, y= value, fill = variable), stat="identity", width=.5, position = "dodge")
 
 #Prepare dummy dataframes to perform tests
-test1 <- chicago.df %>% 
-	group_by(Primary.Type) %>% 
+test1 <- chicago.df %>%
+	group_by(Primary.Type) %>%
 	summarise(N=n())
 test1 <- as.data.frame(test1)
 
@@ -93,8 +102,8 @@ sum <- sum(test1$N)
 for(i in 1:length(test1$Primary.Type)){
 	test1[i,2] <- test1[i,2]/sum
 }
-test2 <- chicago.df.small %>% 
-	group_by(Primary.Type) %>% 
+test2 <- chicago.df.small %>%
+	group_by(Primary.Type) %>%
 	summarise(N=n())
 test2 <- as.data.frame(test2)
 sum <- sum(test2$N)
@@ -102,7 +111,7 @@ for(i in 1:length(test2$Primary.Type)){
 	test2[i,2] <- test2[i,2]/sum
 }
 
-# Merge dummy dataframes into one test sample. 
+# Merge dummy dataframes into one test sample.
 test.sample <- merge(test1, test2, by='Primary.Type', all.x = TRUE)
 test.sample[is.na(test.sample)] <- 0
 
@@ -119,7 +128,7 @@ ggplot(mdata, aes(x = Primary.Type, y = value, fill = samplenosample)) +
 
 # Measure the difference of the distributions.
 test.sample$diff <- abs((test.sample$N.x - test.sample$N.y)*test.sample$N.x)
-ggplot(test.sample, aes(x= Primary.Type, y = diff)) + 
+ggplot(test.sample, aes(x= Primary.Type, y = diff)) +
 	geom_bar(stat='identity', width=.5) +
 	coord_flip()
 

@@ -13,7 +13,7 @@ library(ggmap)
 
 # Read and organise UCR data -------------------------------
 
-chicago.df <- read_iucr_db("data/Crimes_-_2001_to_present_clean.csv")
+chicago.df <- read_ucr_db("data/Crimes_-_2001_to_present_clean.csv")
 
 # Use proper lubridate format
 chicago.df <- chicago.df %>%
@@ -28,7 +28,7 @@ chicago.df.small <- chicago.df %>%
 	sample_n(50000)
 
 # Summarised data frame for time series
-chicago.by.cat <- chicago.df.small %>%
+chicago.by.cat <- chicago.df %>%
 	group_by(Category, Year, Month = month(Date)) %>%
 	dplyr::summarise(N = n()) %>%
 	mutate(Date = ymd(paste(Year, Month, 1))) %>%
