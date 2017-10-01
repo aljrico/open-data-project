@@ -36,7 +36,7 @@ chicago.df <- fread(file="data/Crimes_-_2001_to_present_clean.csv", sep = ",", h
 
 # Clean formats and column names
 chicago.df <- chicago.df %>%
-	dplyr::rename(Primary.Type = `Primary Type`) %>%
+	dplyr::rename(Primary.Type = `PrimaryType`) %>%
 	mutate(Date = mdy_hms(Date)) %>%
 	filter(is.na(Longitude) != TRUE) %>%
 	mutate(Primary.Type = ifelse(grepl("NON", Primary.Type), "NON-CRIMINAL", Primary.Type))
