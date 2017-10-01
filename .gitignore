@@ -4,3 +4,12 @@
 .Ruserdata
 *.Rproj
 /data
+/tex/*.aux
+/tex/*.bbl
+/tex/*.gz
+/tex/*.log
+/tex/*.toc
+/tex/*.xml
+/tex/main-blx.bib
+/tex/contents/*.aux
+/tex/main.pdf
