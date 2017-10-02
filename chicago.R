@@ -52,13 +52,27 @@ chicago.df <- chicago.df %>% mutate(Category = ifelse(Primary.Type == "THEFT" | 
 chicago.df <- chicago.df %>%
 	filter(year(Date) %in% 2001:2016)
 
-# Sumarized data frame
+# Sumarized data frame per crime typology
 mcrimes <- chicago.df %>% 
-	group_by(Category, year = year(Date), month = month(Date)) %>% 
+	group_by(arrested = Category, year = year(Date), month = month(Date)) %>% 
 	summarise(N=n())
 mcrimes$date <- ymd(paste(mcrimes$year, mcrimes$month, 1))
 mcrimes <- mcrimes[c(1,4,5)]
 
+# Sumarized data frame per arrest
+marrested <- chicago.df %>% 
+	filter(Arrest == 'true') %>% 
+	group_by(Category, year = year(Date), month = month(Date)) %>% 
+	summarise(Narrested=n())
+
+mnonarrested <- chicago.df %>% 
+	filter(Arrest =='false') %>% 
+	group_by(Category, year=year(Date), month = month(Date)) %>% 
+	summarise(Nnonarrested=n())
+
+marrest <- merge(marrested, mnonarrested, all.x = TRUE)
+marrest$date <- ymd(paste(marrest$year, marrest$month, 1))
+marrest$clearance <- marrest$Narrested/(marrest$Nnonarrested + marrest $Narrested)
 
 # Sampling ------------------------------------------------
 
@@ -183,6 +197,14 @@ ggplot(chicago.df %>%  filter(weekdays(Date) == "Sunday")) +
 ggplot(chicago.df) +
 	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
 	facet_grid(weekdays(Date) ~ Category)
+
+# Histogram about Arrest
+ggplot(chicago.df, aes(x = year(Date), fill = Arrest)) + 
+	geom_histogram(binwidth = 0.5, position='fill')
+
+# Plot about clearance rate
+ggplot(marrest, aes(y = clearance,x = date, color = Category)) + 
+	geom_point()
 
 # Sunday Truce ---------------------------------------------
 
