@@ -154,10 +154,7 @@ ggmap(chicago) +
 
 # Random plots ---------------------------------------------
 
-# Histogram
-ggplot(chicago.df %>% filter(Primary.Type == "CRIM SEXUAL ASSAULT" | Primary.Type == "STALKING" | Primary.Type == "SEX OFFENSES")) +
-	geom_histogram(aes(year(Date)), binwidth = 0.5)
-
+# Histogram of total crimes
 ggplot(chicago.df) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5)
 
@@ -166,7 +163,7 @@ ggplot(chicago.df) +
 	geom_histogram(aes(year(Date)), binwidth = 0.5) +
 	facet_wrap(~ Category)
 
-# Historical plot
+# Historical plot per category
 ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
 	theme_bw() +
 	geom_line(size=1, lineed="round") +
@@ -238,3 +235,31 @@ ggplot(weekday, aes(x = name, y = mean, ymax = mean + dev, ymin = mean - dev)) +
 for (wday in unique(struce$wday)){
 t.test(struce$N[struce$wday == 'Sunday'], struce$N[struce$wday == wday])
 }
+
+
+# Time Series Analysis ----------------------------------------------------
+
+# Time Series of TOTAL CRIMES
+
+library(xts)
+
+totalcrimes <- chicago.df %>% 
+	group_by(year = year(Date), month = month(Date)) %>% 
+	summarise(N=n())
+
+totalcrimes$date <- ymd(paste(totalcrimes$year, totalcrimes$month, 1))
+totalcrimes <- totalcrimes[,-c(1,2)]
+
+# Time Series of CLEARANCE RATE
+clrate <- marrest %>% 
+	group_by(date, clearance)
+
+clrate$date <- as.Date(clrate$date, '%Y, %m, %d')
+
+
+ggplot(clrate, aes(x=as.Date(date), y=clearance)) +
+	geom_point()
+									
+# Plot about clearance rate
+ggplot(marrest, aes(y = clearance,x = date)) + 
+	geom_point()
