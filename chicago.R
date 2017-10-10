@@ -54,7 +54,7 @@ chicago.df <- chicago.df %>%
 
 # Sumarized data frame per crime typology
 mcrimes <- chicago.df %>% 
-	group_by(arrested = Category, year = year(Date), month = month(Date)) %>% 
+	group_by(Category, year = year(Date), month = month(Date)) %>% 
 	summarise(N=n())
 mcrimes$date <- ymd(paste(mcrimes$year, mcrimes$month, 1))
 mcrimes <- mcrimes[c(1,4,5)]
@@ -166,7 +166,7 @@ ggplot(chicago.df) +
 # Historical plot per category
 ggplot(data=mcrimes, aes(y= N, x=date, color=Category)) +
 	theme_bw() +
-	geom_line(size=1, lineed="round") +
+	geom_line(size=1) +
 	theme(axis.text.x = element_text(face = "bold")) +
 	theme(axis.text.y = element_text(face = "bold"))
 
@@ -186,7 +186,7 @@ ggplot(chicago.df) +
 	facet_wrap(~ Category)
 
 # My old lady goes to church histogram per category
-ggplot(chicago.df %>%  filter(weekdays(Date) == "Sunday")) +
+ggplot(chicago.df %>%  filter(weekdays(Date) == "domingo")) +
 	geom_histogram(aes(hour(Date)), binwidth = 0.5) +
 	facet_wrap(~ Category)
 
@@ -225,15 +225,9 @@ weekday$name <- factor(weekday$name, levels= c("Monday",
 
 weekday[order(weekday$name), ]
 
-ggplot(struce, aes(x = wday, y = N)) +
-	geom_boxplot()
-
-ggplot(weekday, aes(x = name, y = mean, ymax = mean + dev, ymin = mean - dev)) +
-	geom_point() +
-	geom_errorbar()
 
 for (wday in unique(struce$wday)){
-t.test(struce$N[struce$wday == 'Sunday'], struce$N[struce$wday == wday])
+t.test(struce$N[struce$wday == 'domingo'], struce$N[struce$wday == wday])
 }
 
 
